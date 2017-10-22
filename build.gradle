@@ -1,0 +1,26 @@
+
+plugins {
+    id 'java'
+    id 'war'
+    id 'org.akhikhl.gretty' version '1.4.2'
+}
+
+configurations {
+   provided
+}
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    provided group: 'javax.servlet', name: 'javax.servlet-api', version: '3.1.0'
+    compile group: 'com.graphql-java', name: 'graphql-java', version: '5.0'
+    compile group: 'com.graphql-java', name: 'graphql-java-servlet', version: '4.4.0'
+    // compile group: 'com.graphql-java', name: 'graphql-java-tools', version: '4.1.2'
+    compile group: 'com.graphql-java', name: 'graphql-java-annotations', version: '3.0.3'
+}
+
+targetCompatibility = '1.8'
+sourceCompatibility = '1.8'
+
