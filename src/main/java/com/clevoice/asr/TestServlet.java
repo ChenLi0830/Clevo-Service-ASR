@@ -8,31 +8,27 @@ import javax.servlet.http.HttpServletResponse;
 import com.clevoice.asr.models.ASR;
 import com.clevoice.asr.models.ASRException;
 import com.clevoice.asr.models.ASRProvider;
-import java.io.File;
 import java.io.IOException;
 
-@WebServlet(name = "MainServlet", urlPatterns = { "hello" })
-public class MainServlet extends HttpServlet {
+@WebServlet(urlPatterns = { "test" })
+public class TestServlet extends HttpServlet {
   static final long serialVersionUID = 0;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-    String file = request.getParameter("file");
-    if (file == null) {
-      file = "test.wav";
-    }
     String result = "";
 
     try {
-      ASR record = ASRProvider.getInstance().create((new File(file)).getAbsolutePath());
-      result += record.getId();
-      result += record.getFile();
-      result += record.getStatus();
-      result += record.getResult().toString();
+      ASR record = ASRProvider.getInstance().create(request.getParameter("file"));
+      result += record.getId() + "\n";
+      result += record.getFile() + "\n";;
+      result += record.getStatus() + "\n";;
+      result += record.getResult().toString() + "\n";;
     } catch (ASRException e) {
       e.printStackTrace();
       result += e.getMessage();
     }
-    response.getWriter().print("Hello, World! " + result);
+
+    response.getWriter().print("Test\n" + result);
   }
 
   // protected void doPost(HttpServletRequest request, HttpServletResponse response)

@@ -10,12 +10,6 @@ import javax.validation.constraints.NotNull;
 public class Query {
 
   @GraphQLField
-  public static List<Link> links(final DataFetchingEnvironment env) {
-    System.out.println(env.getFields());
-    return LinkProvider.getInstance().getAllLinks();
-  }
-
-  @GraphQLField
   public static List<ASR> asrs(final DataFetchingEnvironment env) throws ASRException {
     return ASRProvider.getInstance().all();
   }

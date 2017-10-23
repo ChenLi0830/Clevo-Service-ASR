@@ -12,6 +12,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import org.apache.commons.io.FileUtils;
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
 
 public class ASRProvider {
 
@@ -28,11 +33,11 @@ public class ASRProvider {
     // has_participle为true或false字符串，
     // max_alternatives 为1-10整数，
     // not_wait为true或false字符串。
-    params.put("suid", Long.toString(System.currentTimeMillis()));
-    params.put("has_participle", "true");
-    params.put("max_alternatives", "3");
-    params.put("no_wait", "false");
-    System.out.println("params: " + params.toString());
+    // params.put("suid", UUID.randomUUID().toString());
+    // params.put("has_participle", "true");
+    // params.put("max_alternatives", "3");
+    // params.put("no_wait", "false");
+    // System.out.println("params: " + params.toString());
 
     // 初始化LFASR实例 
     try {
@@ -55,8 +60,15 @@ public class ASRProvider {
   public ASR create(String file) throws ASRException {
     ASR record = new ASR();
     try {
+      URL url = new URL(file);
+      String[] parts = url.getFile().split("\\.");
+      File temp = new File(UUID.randomUUID().toString() + "." + parts[parts.length-1]);
+      FileUtils.copyURLToFile(url, temp);
+      System.out.println("download succeeded: " + temp.getAbsolutePath());
+      
       // 上传音频文件
-      Message uploadMsg = this.client.lfasrUpload(file, type, params);
+      Message uploadMsg = this.client.lfasrUpload(temp.getAbsolutePath(), type, params);
+      temp.delete();
       record.setFile(file);
 
       // 判断返回值
@@ -90,54 +102,61 @@ public class ASRProvider {
     } catch (LfasrException e) {
       // 上传异常，解析异常描述信息
       Message uploadMsg = JSON.parseObject(e.getMessage(), Message.class);
+      System.err.println("upload failed: " + file);
       System.out.println("ecode=" + uploadMsg.getErr_no());
       System.out.println("failed=" + uploadMsg.getFailed());
+    } catch (IOException e) {
+      System.err.println("download failed: " + file);
+      e.printStackTrace();
     }
     return record;
   }
 
   public ASR get(String id) throws ASRException {
     ASR record = this.records.get(id);
-    if (record == null || (record.getStatus() != "9" && record.getResult() != null) ) {
-      return record;
-    }
+    if (record == null || record.getResult() != null ) {
+      System.out.println("memory record: " + (record != null ? record.toString() : "null"));
+    } else {
+      try {
+        Message progressMsg = this.client.lfasrGetProgress(id);
 
-    try {
-      Message progressMsg = this.client.lfasrGetProgress(id);
-
-      if (progressMsg.getOk() != 0) {
+        if (progressMsg.getOk() == 0) {
+          System.out.println(id + " progress: " + progressMsg.toString());
+          ProgressStatus progressStatus = JSON.parseObject(progressMsg.getData(), ProgressStatus.class);
+          record.setStatus(Integer.toString(progressStatus.getStatus()));
+          if (progressStatus.getStatus() == 9) {
+            try {
+              Message resultMsg = this.client.lfasrGetResult(id);
+              System.out.println(id + " result: " + resultMsg.toString());
+              if (resultMsg.getOk() == 0) {
+                // 打印转写结果
+                record.setResult(resultMsg.getData());
+              } else {
+                // 转写失败，根据失败信息进行处理
+                System.err.println("result failed: " + id);
+                System.err.println("ecode=" + resultMsg.getErr_no());
+                System.err.println("failed=" + resultMsg.getFailed());
+              }
+            } catch (LfasrException e) {
+              // 获取结果异常处理，解析异常描述信息  
+              Message resultMsg = JSON.parseObject(e.getMessage(), Message.class);
+              System.err.println("result failed: " + id);
+              System.out.println("ecode=" + resultMsg.getErr_no());
+              System.out.println("failed=" + resultMsg.getFailed());
+            }
+          }
+        } else {
+          System.err.println("progress failed: " + id);
+          System.err.println("ecode=" + progressMsg.getErr_no());
+          System.err.println("failed=" + progressMsg.getFailed());
+        }
+      } catch (LfasrException e) {
+        // 获取进度异常处理，根据返回信息排查问题后，再次进行获取
+        Message progressMsg = JSON.parseObject(e.getMessage(), Message.class);
         System.err.println("progress failed: " + id);
         System.err.println("ecode=" + progressMsg.getErr_no());
         System.err.println("failed=" + progressMsg.getFailed());
-      } else {
-        System.out.println(id + " progress: " + progressMsg.toString());
-        ProgressStatus progressStatus = JSON.parseObject(progressMsg.getData(), ProgressStatus.class);
-        record.setStatus(Integer.toString(progressStatus.getStatus()));
-        if (progressStatus.getStatus() == 9) {
-          try {
-            Message resultMsg = this.client.lfasrGetResult(id);
-            System.out.println(id + " result: " + resultMsg.toString());
-            if (resultMsg.getOk() == 0) {
-              // 打印转写结果
-              record.setResult(resultMsg.getData());
-            } else {
-              // 转写失败，根据失败信息进行处理  
-              System.err.println("ecode=" + resultMsg.getErr_no());
-              System.err.println("failed=" + resultMsg.getFailed());
-            }
-          } catch (LfasrException e) {
-            // 获取结果异常处理，解析异常描述信息  
-            Message resultMsg = JSON.parseObject(e.getMessage(), Message.class);
-            System.out.println("ecode=" + resultMsg.getErr_no());
-            System.out.println("failed=" + resultMsg.getFailed());
-          }
-        }
       }
-    } catch (LfasrException e) {
-      // 获取进度异常处理，根据返回信息排查问题后，再次进行获取
-      Message progressMsg = JSON.parseObject(e.getMessage(), Message.class);
-      System.out.println("ecode=" + progressMsg.getErr_no());
-      System.out.println("failed=" + progressMsg.getFailed());
     }
     return record;
   }
