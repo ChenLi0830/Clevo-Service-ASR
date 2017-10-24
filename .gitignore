@@ -1,0 +1,9 @@
+.gradle
+.settings
+.vscode
+bin
+build
+
+.classpath
+.project
+src/main/resources/config.properties
