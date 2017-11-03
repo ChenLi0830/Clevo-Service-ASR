@@ -9,17 +9,11 @@ public class Transcription {
   @GraphQLField
   private String id;
   @GraphQLField
-  private String file;
-  @GraphQLField
-  private String status;
+  private TranscriptionStatus status;
   @GraphQLField
   private String result;
 
   public Transcription() {
-  }
-
-  public String getFile() {
-    return file;
   }
 
   public void setId(String id) {
@@ -30,15 +24,11 @@ public class Transcription {
     return id;
   }
 
-  public void setFile(String file) {
-    this.file = file;
-  }
-
-  public String getStatus() {
+  public TranscriptionStatus getStatus() {
     return status;
   }
 
-  public void setStatus(String status) {
+  public void setStatus(TranscriptionStatus status) {
     this.status = status;
   }
 
@@ -51,6 +41,6 @@ public class Transcription {
   }
 
   public String toString() {
-    return "id:[" + id + "] file:[" + file + "] status:[" + status + "] result:[" + result +"]";
+    return "id:[" + id + "] status:[" + status + "] result:[" + result +"]";
   }
 }

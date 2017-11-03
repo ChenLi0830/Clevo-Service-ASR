@@ -7,11 +7,7 @@ import com.iflytek.msp.cpdb.lfasr.exception.LfasrException;
 import com.iflytek.msp.cpdb.lfasr.model.LfasrType;
 import com.iflytek.msp.cpdb.lfasr.model.Message;
 import com.iflytek.msp.cpdb.lfasr.model.ProgressStatus;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import org.apache.commons.io.FileUtils;
 import java.io.File;
@@ -22,7 +18,6 @@ public class TranscriptionProvider {
 
   private final static TranscriptionProvider instance = new TranscriptionProvider();
 
-  private Map<String, Transcription> records;
   private LfasrClient client;
   private LfasrType type = LfasrType.LFASR_TELEPHONY_RECORDED_AUDIO;
   private HashMap<String, String> params = new HashMap<>();
@@ -49,8 +44,6 @@ public class TranscriptionProvider {
       System.err.println("ecode=" + initMsg.getErr_no());
       System.err.println("failed=" + initMsg.getFailed());
     }
-
-    this.records = new HashMap<>();
   }
 
   public static TranscriptionProvider getInstance() {
@@ -69,7 +62,6 @@ public class TranscriptionProvider {
       // 上传音频文件
       Message uploadMsg = this.client.lfasrUpload(temp.getAbsolutePath(), type, params);
       temp.delete();
-      record.setFile(file);
 
       // 判断返回值
       int ok = uploadMsg.getOk();
@@ -78,11 +70,11 @@ public class TranscriptionProvider {
         String task_id = uploadMsg.getData();
         System.out.println("upload succeeded: " + uploadMsg.toString());
         record.setId(task_id);
-        this.records.put(task_id, record);
+        record.setStatus(TranscriptionStatus.started);
 
         while (true) {
-          Transcription one = this.get(task_id);
-          if (one.getStatus() != null && one.getStatus() != "9" && one.getResult() == null) {
+          record = this.get(task_id);
+          if (record.getStatus() != null && record.getStatus() != TranscriptionStatus.completed && record.getResult() == null) {
             try {
               Thread.sleep(10000);
             } catch (InterruptedException e) {
@@ -98,6 +90,7 @@ public class TranscriptionProvider {
         System.err.println("upload failed: " + file);
         System.err.println("ecode=" + uploadMsg.getErr_no());
         System.err.println("failed=" + uploadMsg.getFailed());
+        record.setStatus(TranscriptionStatus.failed);
       }
     } catch (LfasrException e) {
       // 上传异常，解析异常描述信息
@@ -105,82 +98,64 @@ public class TranscriptionProvider {
       System.err.println("upload failed: " + file);
       System.out.println("ecode=" + uploadMsg.getErr_no());
       System.out.println("failed=" + uploadMsg.getFailed());
+      record.setStatus(TranscriptionStatus.failed);
     } catch (IOException e) {
       System.err.println("download failed: " + file);
       e.printStackTrace();
+      record.setStatus(TranscriptionStatus.failed);
     }
     return record;
   }
 
   public Transcription get(String id) throws TranscriptionException {
-    Transcription record = this.records.get(id);
-    if (record == null || record.getResult() != null ) {
-      System.out.println("memory record: " + (record != null ? record.toString() : "null"));
-    } else {
-      try {
-        Message progressMsg = this.client.lfasrGetProgress(id);
+    Transcription record = new Transcription();
+    record.setId(id);
+    try {
+      Message progressMsg = this.client.lfasrGetProgress(id);
 
-        if (progressMsg.getOk() == 0) {
-          System.out.println(id + " progress: " + progressMsg.toString());
-          ProgressStatus progressStatus = JSON.parseObject(progressMsg.getData(), ProgressStatus.class);
-          record.setStatus(Integer.toString(progressStatus.getStatus()));
-          if (progressStatus.getStatus() == 9) {
-            try {
-              Message resultMsg = this.client.lfasrGetResult(id);
-              System.out.println(id + " result: " + resultMsg.toString());
-              if (resultMsg.getOk() == 0) {
-                // 打印转写结果
-                record.setResult(resultMsg.getData());
-              } else {
-                // 转写失败，根据失败信息进行处理
-                System.err.println("result failed: " + id);
-                System.err.println("ecode=" + resultMsg.getErr_no());
-                System.err.println("failed=" + resultMsg.getFailed());
-              }
-            } catch (LfasrException e) {
-              // 获取结果异常处理，解析异常描述信息  
-              Message resultMsg = JSON.parseObject(e.getMessage(), Message.class);
+      if (progressMsg.getOk() == 0) {
+        System.out.println(id + " progress: " + progressMsg.toString());
+        ProgressStatus progressStatus = JSON.parseObject(progressMsg.getData(), ProgressStatus.class);
+        if (progressStatus.getStatus() == 9) {
+          record.setStatus(TranscriptionStatus.completed);
+          try {
+            Message resultMsg = this.client.lfasrGetResult(id);
+            System.out.println(id + " result: " + resultMsg.toString());
+            if (resultMsg.getOk() == 0) {
+              // 打印转写结果
+              record.setResult(resultMsg.getData());
+            } else {
+              // 转写失败，根据失败信息进行处理
               System.err.println("result failed: " + id);
-              System.out.println("ecode=" + resultMsg.getErr_no());
-              System.out.println("failed=" + resultMsg.getFailed());
+              System.err.println("ecode=" + resultMsg.getErr_no());
+              System.err.println("failed=" + resultMsg.getFailed());
+              record.setStatus(TranscriptionStatus.failed);
             }
+          } catch (LfasrException e) {
+            // 获取结果异常处理，解析异常描述信息  
+            Message resultMsg = JSON.parseObject(e.getMessage(), Message.class);
+            System.err.println("result failed: " + id);
+            System.out.println("ecode=" + resultMsg.getErr_no());
+            System.out.println("failed=" + resultMsg.getFailed());
+            record.setStatus(TranscriptionStatus.failed);
           }
         } else {
-          System.err.println("progress failed: " + id);
-          System.err.println("ecode=" + progressMsg.getErr_no());
-          System.err.println("failed=" + progressMsg.getFailed());
+          record.setStatus(TranscriptionStatus.processing);
         }
-      } catch (LfasrException e) {
-        // 获取进度异常处理，根据返回信息排查问题后，再次进行获取
-        Message progressMsg = JSON.parseObject(e.getMessage(), Message.class);
+      } else {
         System.err.println("progress failed: " + id);
         System.err.println("ecode=" + progressMsg.getErr_no());
         System.err.println("failed=" + progressMsg.getFailed());
+        record.setStatus(TranscriptionStatus.failed);
       }
+    } catch (LfasrException e) {
+      // 获取进度异常处理，根据返回信息排查问题后，再次进行获取
+      Message progressMsg = JSON.parseObject(e.getMessage(), Message.class);
+      System.err.println("progress failed: " + id);
+      System.err.println("ecode=" + progressMsg.getErr_no());
+      System.err.println("failed=" + progressMsg.getFailed());
+      record.setStatus(TranscriptionStatus.failed);
     }
     return record;
-  }
-
-  public Transcription save(Transcription record) throws TranscriptionException {
-    this.records.put(record.getId(), record);
-    return record;
-  }
-
-  public Transcription delete(String id) throws TranscriptionException {
-    return this.records.remove(id);
-  }
-
-  public List<Transcription> all() throws TranscriptionException {
-    Set<String> keys = this.records.keySet();
-    ArrayList<Transcription> result = new ArrayList<>();
-    keys.forEach(key -> {
-      try {
-        Transcription record = this.get(key);
-        result.add(record);
-      } catch (TranscriptionException e) {
-        e.printStackTrace();
-      }
-    });
-    return result;
   }
 }

@@ -13,10 +13,4 @@ public class Mutation {
       throws TranscriptionException {
     return TranscriptionProvider.getInstance().create(file);
   }
-
-  @GraphQLField
-  public static Transcription transcriptionDelete(final DataFetchingEnvironment env, @NotNull @GraphQLName("id") final String id)
-      throws TranscriptionException {
-    return TranscriptionProvider.getInstance().delete(id);
-  }
 }
