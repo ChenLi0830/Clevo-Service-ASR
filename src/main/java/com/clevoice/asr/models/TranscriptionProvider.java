@@ -18,16 +18,16 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
-public class ASRProvider {
+public class TranscriptionProvider {
 
-  private final static ASRProvider instance = new ASRProvider();
+  private final static TranscriptionProvider instance = new TranscriptionProvider();
 
-  private Map<String, ASR> records;
+  private Map<String, Transcription> records;
   private LfasrClient client;
   private LfasrType type = LfasrType.LFASR_TELEPHONY_RECORDED_AUDIO;
   private HashMap<String, String> params = new HashMap<>();
 
-  private ASRProvider() {
+  private TranscriptionProvider() {
     // 用户自定义参数，可传递suid，has_participle（是否分词），max_alternatives（多候选词），not_wait（是否同步等待）
     // suid为用户自定义标识字符串，
     // has_participle为true或false字符串，
@@ -53,12 +53,12 @@ public class ASRProvider {
     this.records = new HashMap<>();
   }
 
-  public static ASRProvider getInstance() {
+  public static TranscriptionProvider getInstance() {
     return instance;
   }
 
-  public ASR create(String file) throws ASRException {
-    ASR record = new ASR();
+  public Transcription create(String file) throws TranscriptionException {
+    Transcription record = new Transcription();
     try {
       URL url = new URL(file);
       String[] parts = url.getFile().split("\\.");
@@ -81,13 +81,13 @@ public class ASRProvider {
         this.records.put(task_id, record);
 
         while (true) {
-          ASR one = this.get(task_id);
+          Transcription one = this.get(task_id);
           if (one.getStatus() != null && one.getStatus() != "9" && one.getResult() == null) {
             try {
               Thread.sleep(10000);
             } catch (InterruptedException e) {
               e.printStackTrace();
-              throw new ASRException(e.getMessage());
+              throw new TranscriptionException(e.getMessage());
             }              
           } else {
             break;
@@ -112,8 +112,8 @@ public class ASRProvider {
     return record;
   }
 
-  public ASR get(String id) throws ASRException {
-    ASR record = this.records.get(id);
+  public Transcription get(String id) throws TranscriptionException {
+    Transcription record = this.records.get(id);
     if (record == null || record.getResult() != null ) {
       System.out.println("memory record: " + (record != null ? record.toString() : "null"));
     } else {
@@ -161,23 +161,23 @@ public class ASRProvider {
     return record;
   }
 
-  public ASR save(ASR record) throws ASRException {
+  public Transcription save(Transcription record) throws TranscriptionException {
     this.records.put(record.getId(), record);
     return record;
   }
 
-  public ASR delete(String id) throws ASRException {
+  public Transcription delete(String id) throws TranscriptionException {
     return this.records.remove(id);
   }
 
-  public List<ASR> all() throws ASRException {
+  public List<Transcription> all() throws TranscriptionException {
     Set<String> keys = this.records.keySet();
-    ArrayList<ASR> result = new ArrayList<>();
+    ArrayList<Transcription> result = new ArrayList<>();
     keys.forEach(key -> {
       try {
-        ASR record = this.get(key);
+        Transcription record = this.get(key);
         result.add(record);
-      } catch (ASRException e) {
+      } catch (TranscriptionException e) {
         e.printStackTrace();
       }
     });

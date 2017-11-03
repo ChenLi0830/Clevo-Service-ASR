@@ -3,8 +3,8 @@ package com.clevoice.asr.models;
 import graphql.annotations.GraphQLName;
 import graphql.annotations.GraphQLField;
 
-@GraphQLName("ASR")
-public class ASR {
+@GraphQLName("Transcription")
+public class Transcription {
 
   @GraphQLField
   private String id;
@@ -15,7 +15,7 @@ public class ASR {
   @GraphQLField
   private String result;
 
-  public ASR() {
+  public Transcription() {
   }
 
   public String getFile() {
