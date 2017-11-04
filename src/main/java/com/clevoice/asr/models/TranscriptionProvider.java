@@ -31,10 +31,12 @@ public class TranscriptionProvider {
     // max_alternatives 为1-10整数，
     // not_wait为true或false字符串。
     // params.put("suid", UUID.randomUUID().toString());
-    params.put("has_participle", System.getenv("IFLYTEK_HAS_PARTICIPLE") != null ? System.getenv("IFLYTEK_HAS_PARTICIPLE") : "false");
-    params.put("max_alternatives", System.getenv("IFLYTEK_MAX_ALTERNATIVES") != null ? System.getenv("IFLYTEK_MAX_ALTERNATIVES") : "1");
-    params.put("no_wait", System.getenv("IFLYTEK_NO_WAIT") != null ? System.getenv("IFLYTEK_NO_WAIT") : "false");
-    // System.out.println("params: " + params.toString());
+    if (System.getenv("IFLYTEK_HAS_PARTICIPLE") != null) 
+      params.put("has_participle", System.getenv("IFLYTEK_HAS_PARTICIPLE"));
+    if (System.getenv("IFLYTEK_MAX_ALTERNATIVES") != null)
+      params.put("max_alternatives",System.getenv("IFLYTEK_MAX_ALTERNATIVES"));
+    if (System.getenv("IFLYTEK_NO_WAIT") != null)
+      params.put("no_wait", System.getenv("IFLYTEK_NO_WAIT"));
 
     // 初始化LFASR实例 
     try {
