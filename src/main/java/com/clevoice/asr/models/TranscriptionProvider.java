@@ -29,9 +29,9 @@ public class TranscriptionProvider {
     // max_alternatives 为1-10整数，
     // not_wait为true或false字符串。
     // params.put("suid", UUID.randomUUID().toString());
-    // params.put("has_participle", "true");
-    // params.put("max_alternatives", "3");
-    // params.put("no_wait", "false");
+    params.put("has_participle", System.getenv("IFLYTEK_HAS_PARTICIPLE") != null ? System.getenv("IFLYTEK_HAS_PARTICIPLE") : "false");
+    params.put("max_alternatives", System.getenv("IFLYTEK_MAX_ALTERNATIVES") != null ? System.getenv("IFLYTEK_MAX_ALTERNATIVES") : "1");
+    params.put("no_wait", System.getenv("IFLYTEK_NO_WAIT") != null ? System.getenv("IFLYTEK_NO_WAIT") : "false");
     // System.out.println("params: " + params.toString());
 
     // 初始化LFASR实例 
@@ -72,7 +72,7 @@ public class TranscriptionProvider {
         record.setId(task_id);
         record.setStatus(TranscriptionStatus.started);
 
-        while (true) {
+        while (params.get("no_wait") == null || params.get("no_wait").toString().equalsIgnoreCase("false")) {
           record = this.get(task_id);
           if (record.getStatus() != null && record.getStatus() != TranscriptionStatus.completed && record.getResult() == null) {
             try {

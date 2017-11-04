@@ -15,20 +15,13 @@ public class TestServlet extends HttpServlet {
   static final long serialVersionUID = 0;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-    String result = "";
+    String result = "Test: " + System.currentTimeMillis();
+    result += "\nIFLYTEK_HAS_PARTICIPLE: " + System.getenv("IFLYTEK_HAS_PARTICIPLE");
+    result += "\nIFLYTEK_MAX_ALTERNATIVES: " + System.getenv("IFLYTEK_MAX_ALTERNATIVES");
+    result += "\nIFLYTEK_NO_WAIT: " + System.getenv("IFLYTEK_NO_WAIT");
+    result += "\nHOME: " + System.getenv("HOME");
 
-    // try {
-    //   ASR record = ASRProvider.getInstance().create(request.getParameter("file"));
-    //   result += record.getId() + "\n";
-    //   result += record.getFile() + "\n";;
-    //   result += record.getStatus() + "\n";;
-    //   result += record.getResult().toString() + "\n";;
-    // } catch (ASRException e) {
-    //   e.printStackTrace();
-    //   result += e.getMessage();
-    // }
-
-    response.getWriter().print("Test\n" + result);
+    response.getWriter().print(result);
   }
 
   // protected void doPost(HttpServletRequest request, HttpServletResponse response)
