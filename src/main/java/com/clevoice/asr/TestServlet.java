@@ -22,6 +22,7 @@ public class TestServlet extends HttpServlet {
     result += "\nIFLYTEK_NO_WAIT: " + System.getenv("IFLYTEK_NO_WAIT");
     Properties props = new Properties();
     props.load(this.getClass().getResourceAsStream("/config.properties"));
+    props.remove("secret_key");
     result += "\nconfig.properties: " + props;
 
     response.getWriter().print(result);
