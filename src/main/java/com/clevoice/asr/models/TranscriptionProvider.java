@@ -8,6 +8,7 @@ import com.iflytek.msp.cpdb.lfasr.model.LfasrType;
 import com.iflytek.msp.cpdb.lfasr.model.Message;
 import com.iflytek.msp.cpdb.lfasr.model.ProgressStatus;
 import java.util.HashMap;
+import java.util.Properties;
 import java.util.UUID;
 import org.apache.commons.io.FileUtils;
 import java.io.File;
@@ -20,6 +21,7 @@ public class TranscriptionProvider {
 
   private LfasrClient client;
   private LfasrType type = LfasrType.LFASR_TELEPHONY_RECORDED_AUDIO;
+  private Properties config = new Properties();
   private HashMap<String, String> params = new HashMap<>();
 
   private TranscriptionProvider() {
@@ -37,12 +39,16 @@ public class TranscriptionProvider {
     // 初始化LFASR实例 
     try {
       this.client = LfasrClientImp.initLfasrClient();
+      this.config.load(this.getClass().getResourceAsStream("/config.properties"));
     } catch (LfasrException e) {
       e.printStackTrace();
       Message initMsg = JSON.parseObject(e.getMessage(), Message.class);
-      System.err.println("init failed");
+      System.err.println("init failed on initiating Lfasr client");
       System.err.println("ecode=" + initMsg.getErr_no());
       System.err.println("failed=" + initMsg.getFailed());
+    } catch (IOException e) {
+      e.printStackTrace();
+      System.err.println("init failed on loading config.properties");
     }
   }
 
@@ -55,7 +61,7 @@ public class TranscriptionProvider {
     try {
       URL url = new URL(file);
       String[] parts = url.getFile().split("\\.");
-      File temp = new File(UUID.randomUUID().toString() + "." + parts[parts.length-1]);
+      File temp = new File(this.config.getProperty("store_path"), UUID.randomUUID().toString() + "." + parts[parts.length-1]);
       FileUtils.copyURLToFile(url, temp);
       System.out.println("download succeeded: " + temp.getAbsolutePath());
       
