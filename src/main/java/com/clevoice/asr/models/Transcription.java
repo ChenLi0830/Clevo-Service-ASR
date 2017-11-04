@@ -3,23 +3,17 @@ package com.clevoice.asr.models;
 import graphql.annotations.GraphQLName;
 import graphql.annotations.GraphQLField;
 
-@GraphQLName("ASR")
-public class ASR {
+@GraphQLName("Transcription")
+public class Transcription {
 
   @GraphQLField
   private String id;
   @GraphQLField
-  private String file;
-  @GraphQLField
-  private String status;
+  private TranscriptionStatus status;
   @GraphQLField
   private String result;
 
-  public ASR() {
-  }
-
-  public String getFile() {
-    return file;
+  public Transcription() {
   }
 
   public void setId(String id) {
@@ -30,15 +24,11 @@ public class ASR {
     return id;
   }
 
-  public void setFile(String file) {
-    this.file = file;
-  }
-
-  public String getStatus() {
+  public TranscriptionStatus getStatus() {
     return status;
   }
 
-  public void setStatus(String status) {
+  public void setStatus(TranscriptionStatus status) {
     this.status = status;
   }
 
@@ -51,6 +41,6 @@ public class ASR {
   }
 
   public String toString() {
-    return "id:[" + id + "] file:[" + file + "] status:[" + status + "] result:[" + result +"]";
+    return "id:[" + id + "] status:[" + status + "] result:[" + result +"]";
   }
 }

@@ -9,14 +9,8 @@ import javax.validation.constraints.NotNull;
 public class Mutation {
 
   @GraphQLField
-  public static ASR createASR(final DataFetchingEnvironment env, @NotNull @GraphQLName("file") final String file)
-      throws ASRException {
-    return ASRProvider.getInstance().create(file);
-  }
-
-  @GraphQLField
-  public static ASR deleteASR(final DataFetchingEnvironment env, @NotNull @GraphQLName("id") final String id)
-      throws ASRException {
-    return ASRProvider.getInstance().delete(id);
+  public static Transcription transcriptionCreate(final DataFetchingEnvironment env, @NotNull @GraphQLName("file") final String file)
+      throws TranscriptionException {
+    return TranscriptionProvider.getInstance().create(file);
   }
 }
