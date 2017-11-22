@@ -7,6 +7,10 @@ index.html - GraphiQL
 /graphql - Service endpoint
 
 ## Running
+Compile and package (build/libs/Clevo-Service-ASR.war)
 
-./gradlew build - compile and package (build/libs/Clevo-Service-ASR.war)
-./gradlew appRun - run locally on jetty (http://localhost:8080/Clevo-Service-ASR)
+`./gradlew build`
+
+Run locally on jetty (http://localhost:8080/Clevo-Service-ASR)
+
+`./gradlew appRun`
