@@ -7,3 +7,5 @@ build
 .classpath
 .project
 src/main/resources/config.properties
+docker-compose.yml
+Clevo-Service-ASR.war
