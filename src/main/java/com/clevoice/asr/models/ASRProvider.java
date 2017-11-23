@@ -109,6 +109,14 @@ public class ASRProvider {
       System.err.println("download failed: " + file);
       e.printStackTrace();
     }
+
+    try {
+      Thread.sleep(0); // used for test server timeout config
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+      throw new ASRException(e.getMessage());
+    }
+    
     return record;
   }
 
